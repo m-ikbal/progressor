@@ -171,15 +171,6 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
-
-      {/* Demo credentials */}
-      <div className="p-4 rounded-lg bg-muted/50 border border-dashed">
-        <p className="text-sm text-muted-foreground text-center">
-          <span className="font-medium">Demo hesabı:</span>
-          <br />
-          demo@progressor.dev / demo123456
-        </p>
-      </div>
     </div>
   );
 }
