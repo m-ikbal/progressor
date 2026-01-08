@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   CheckSquare,
@@ -17,6 +19,15 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -31,6 +42,7 @@ import {
   cn,
 } from '@/lib/utils';
 import { TaskStatus, TaskPriority } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 interface Task {
   id: string;
@@ -84,6 +96,52 @@ const priorityBorderClass: Record<TaskPriority, string> = {
 };
 
 export function TaskList({ tasks }: TaskListProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const deleteTask = useMemo(() => {
+    return tasks.find((t) => t.id === deleteTaskId) ?? null;
+  }, [tasks, deleteTaskId]);
+
+  const onDelete = async () => {
+    if (!deleteTaskId) return;
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/tasks/${deleteTaskId}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        toast({
+          title: 'Hata',
+          description: result.error || 'Görev silinemedi',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Başarılı',
+        description: 'Görev silindi',
+      });
+
+      setDeleteTaskId(null);
+      router.refresh();
+    } catch {
+      toast({
+        title: 'Hata',
+        description: 'Bir hata oluştu',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (tasks.length === 0) {
     return (
       <Card>
@@ -237,12 +295,18 @@ export function TaskList({ tasks }: TaskListProps) {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/tasks/${task.id}`}>
+                                  <Link href={`/tasks/${task.id}/edit`}>
                                     <Pencil className="mr-2 h-4 w-4" />
                                     Düzenle
                                   </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                    setDeleteTaskId(task.id);
+                                  }}
+                                >
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Sil
                                 </DropdownMenuItem>
@@ -259,6 +323,34 @@ export function TaskList({ tasks }: TaskListProps) {
           </div>
         );
       })}
+
+      <Dialog
+        open={!!deleteTaskId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTaskId(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Görevi sil?</DialogTitle>
+            <DialogDescription>
+              {deleteTask
+                ? `"${deleteTask.title}" görevini silmek istediğine emin misin? Bu işlem görevi arşivler.`
+                : 'Bu görevi silmek istediğine emin misin? Bu işlem görevi arşivler.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" disabled={isDeleting}>
+                İptal
+              </Button>
+            </DialogClose>
+            <Button variant="destructive" isLoading={isDeleting} onClick={onDelete}>
+              Sil
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
