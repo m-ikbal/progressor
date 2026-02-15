@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+function toSafeNumber(value: unknown): number {
+  if (typeof value === 'bigint') return Number(value);
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return Number(value);
+  return 0;
+}
+
 function safeConnectionInfo(databaseUrl: string) {
   try {
     const u = new URL(databaseUrl);
@@ -53,10 +60,10 @@ export async function GET() {
     ]);
 
     counts = {
-      User: Number(userCount?.[0]?.count ?? 0n),
-      Category: Number(categoryCount?.[0]?.count ?? 0n),
-      Task: Number(taskCount?.[0]?.count ?? 0n),
-      Note: Number(noteCount?.[0]?.count ?? 0n),
+      User: toSafeNumber(userCount?.[0]?.count),
+      Category: toSafeNumber(categoryCount?.[0]?.count),
+      Task: toSafeNumber(taskCount?.[0]?.count),
+      Note: toSafeNumber(noteCount?.[0]?.count),
     };
   } catch {
     // Ignore; if misconfigured, this endpoint still helps by showing parsed host/db.
