@@ -111,6 +111,12 @@ export default withAuth(
           return true;
         }
 
+        // Dev-only debug routes - allow without auth
+        // (The handler itself returns 404 outside development, so this doesn't expose data in prod.)
+        if (pathname.startsWith('/api/debug')) {
+          return true;
+        }
+
         // API public routes
         if (pathname === '/api/health') {
           return true;

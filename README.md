@@ -16,7 +16,7 @@
 
 - **Framework:** Next.js 14 (App Router)
 - **Dil:** TypeScript
-- **Veritabanı:** SQLite (Prisma ORM)
+- **Veritabanı:** PostgreSQL (Neon) + Prisma ORM
 - **Kimlik Doğrulama:** NextAuth.js
 - **Stil:** Tailwind CSS
 - **UI Bileşenleri:** Radix UI
@@ -40,18 +40,21 @@ npm install
 
 2. **Ortam değişkenlerini ayarlayın:**
 
-`.env` dosyası oluşturun:
+`.env.local` (önerilir) dosyası oluşturun:
 
 ```env
-DATABASE_URL="file:./dev.db"
+# Neon / PostgreSQL connection string
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-super-secret-key-change-in-production"
 ```
 
+> Not: Prisma migrate komutları `.env` dosyasını okuyabilir; uygulamanın kullandığı DB ile migration yapılan DB'nin aynı olduğundan emin olun.
+
 3. **Veritabanını oluşturun:**
 
 ```bash
-npm run db:push
+npm run db:migrate
 ```
 
 4. **Demo verileri yükleyin (opsiyonel):**
